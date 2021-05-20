@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Booking;
+use App\Entity\User;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +19,22 @@ class BookingRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Booking::class);
+    }
+
+    public function findAfterDate(DateTime $startDate, User $user)
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            'SELECT b
+            FROM App\Entity\Booking b
+            WHERE b.endDate > :startDate AND b.user != :user
+            ORDER BY b.startDate ASC'
+        )->setParameter('startDate', $startDate)
+            ->setParameter('user', $user);
+
+        return $query->getResult();
+
     }
 
     // /**

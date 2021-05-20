@@ -6,6 +6,7 @@ use App\Entity\Booking;
 use App\Entity\Room;
 use App\Entity\User;
 use App\Form\Type\BookingType;
+use App\Repository\BookingRepository;
 use App\Repository\RoomRepository;
 use DateTime;
 use SebastianBergmann\Comparator\Book;
@@ -28,17 +29,20 @@ class BookingController extends AbstractController
     }
 
     #[Route('/booking/{room_id}', name: 'make_booking', methods: ['GET', 'POST'])]
-    public function book(Room $room_id, Request $request, ValidatorInterface $validator): Response
+    public function book(BookingRepository $bookingRepository, Room $room_id, Request $request, ValidatorInterface $validator): Response
     {
 
         $this->denyAccessUnlessGranted('ROLE_USER');
 
+        //create new booking object an set default values
         $booking = new Booking();
         $booking->setUser($this->getUser());
         $booking->setRoom($room_id);
         $booking->setStartDate(new DateTime());
         $booking->setEndDate(new DateTime());
 
+        // TODO: instead of findAll, just get the ones that have an end date AFTER now
+        $booking->setBookingRecord($bookingRepository->findAfterDate(new DateTime('now'), $booking->getUser()));
         $form = $this->createForm(BookingType::class, $booking);
         $form->handleRequest($request);
 

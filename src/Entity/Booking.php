@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * @ORM\Entity(repositoryClass=BookingRepository::class)
@@ -46,8 +47,18 @@ class Booking
      */
     private $endDate;
 
-    public function __construct()
+    private $bookingRecord = [];
+
+    public function __construct(DateTime $startDate = null, DateTime $endDate = null, $user = null)
     {
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+        $this->user = $user;
+    }
+
+    public function setBookingRecord(array $bookings) : void
+    {
+        $this->bookingRecord = $bookings;
     }
 
     public function getId(): ?int
@@ -114,7 +125,7 @@ class Booking
     #region validatorGetters
     /**
      * @return bool
-     * @Assert\IsTrue(message = "duration invalid")
+     * @Assert\IsTrue(message = "invalid duration")
      */
     public function isValidDuration(): bool
     {
@@ -142,6 +153,22 @@ class Booking
         $userCredit = $this->getUser()->getCredit();
 
         return ($userCredit >= $durationHours * self::CREDIT_PER_HOUR);
+    }
+
+    /**
+     * @return bool
+     * @Assert\IsTrue (message = "this period of time is unavailable since it has already been booked by others.")
+     */
+    public function isUnoccupied(): bool
+    {
+        /* @var $booking Booking */
+        foreach($this->bookingRecord as  $booking)
+        {
+            if( max($booking->getStartDate()->getTimestamp(), $this->startDate->getTimestamp()) < min($booking->getEndDate()->getTimestamp(), $this->endDate->getTimestamp())){
+                return false;
+            }
+        }
+        return true;
     }
 
 

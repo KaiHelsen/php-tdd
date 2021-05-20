@@ -133,4 +133,84 @@ final class checkBookingDurationTest extends TestCase
         self::assertFalse($booking_6->isAffordableByUser());
 
     }
+
+    public function testIfBookingIsAvailable(): void
+    {
+        //defining the data needed for the test. There's a lot going on here.
+        #region dataSetup
+        $user1 = new User();
+        $user2 = new User();
+        $user3 = new User();
+        $user4 = new User();
+
+        $user5 = new User();
+
+        $bookings = [
+            new Booking(
+                DateTime::createFromFormat('H-i', '0-00'),
+                DateTime::createFromFormat('H-i', '4-00'),
+                $user1
+            ),
+            // 1 hour gap
+            new Booking(
+                DateTime::createFromFormat('H-i', '5-00'),
+                DateTime::createFromFormat('H-i', '6-00'),
+                $user2
+            ),
+            //4 hour gap
+            new Booking(
+                DateTime::createFromFormat('H-i', '10-00'),
+                DateTime::createFromFormat('H-i', '12-00'),
+                $user3
+            ),
+            // no gap
+            new Booking(
+                DateTime::createFromFormat('H-i', '12-00'),
+                DateTime::createFromFormat('H-i', '16-00'),
+                $user2
+            ),
+            // 2 hour gap
+            new Booking(
+                DateTime::createFromFormat('H-i', '18-00'),
+                DateTime::createFromFormat('H-i', '20-00'),
+                $user1
+            ),
+            //no gap
+            new Booking(
+                DateTime::createFromFormat('H-i', '20-00'),
+                DateTime::createFromFormat('H-i', '24-00'),
+                $user4
+            ),
+        ];
+
+        //this one should be available
+        $testBooking_1 = new Booking(
+            DateTime::createFromFormat('H-i', '4-00'),
+            DateTime::createFromFormat('H-i', '5-00'),
+            $user5);
+        $testBooking_1->setBookingRecord($bookings);
+
+        //this one should be available
+        $testBooking_2 = new Booking(
+            DateTime::createFromFormat('H-i', '8-00'),
+            DateTime::createFromFormat('H-i', '9-00'),
+            $user5);
+        $testBooking_2->setBookingRecord($bookings);
+
+        //this one should NOT be available
+        $testBooking_3 = new Booking(
+            DateTime::createFromFormat('H-i', '11-00'),
+            DateTime::createFromFormat('H-i', '12-00'),
+            $user5);
+        $testBooking_3->setBookingRecord($bookings);
+        #endregion
+        //ACTUAL TEST TIME
+
+        self::assertTrue($testBooking_1->isUnoccupied());
+        self::assertTrue($testBooking_2->isUnoccupied());
+        self::assertFalse($testBooking_3->isUnoccupied());
+
+        // TODO: write more tests oh god I'm tired
+
+    }
 }
